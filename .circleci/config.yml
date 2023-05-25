@@ -1,0 +1,15 @@
+version: 2.1
+jobs:
+  compile:
+   docker:
+      - image: 31482281/ubuntu:latest
+    steps:
+      - run:
+         name: Building kernel
+            command: |
+            bash .circleci/build.sh
+workflows:
+  version: 2.1
+    cooking:
+    jobs:
+      - compile
