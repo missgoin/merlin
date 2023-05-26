@@ -1,140 +1,119 @@
-#!/bin/bash
-#
-# Script For Building Android arm64 Kernel
+#!/usr/bin/env bash
+ # Script For Building Android Kernel
 
-# Setup colour for the script
-yellow='\033[0;33m'
-white='\033[0m'
-red='\033[0;31m'
-green='\e[0;32m'
+# Bail out if script fails
+set -e
 
-# Deleting out "kernel complied" and zip "anykernel" from an old compilation
-echo -e "$green << cleanup >> \n $white"
+##--------------------------------------------------------##
 
-rm -rf out
-rm -rf zip
-rm -rf error.log
+# Basic Information
+KERNEL_DIR="$(pwd)"
+VERSION=01
+MODEL=Xiaomi
+DEVICE=merlin
+DEFCONFIG=${DEVICE}_defconfig
+IMAGE=$(pwd)/out/arch/arm64/boot/Image.gz-dtb
+#C_BRANCH=$(git branch --show-current)
 
-echo -e "$green << setup dirs >> \n $white"
+##----------------------------------------------------------##
+## Export Variables and Info
+function exports() {
+  export ARCH=arm64
+  export SUBARCH=arm64
+  #export LOCALVERSION="-${C_BRANCH}"
+  export KBUILD_BUILD_HOST=Pancali
+  export KBUILD_BUILD_USER="unknown"
+  export PROCS=$(nproc --all)
+  export DISTRO=$(source /etc/os-release && echo "${NAME}")
 
-# With that setup , the script will set dirs and few important thinks
+# Variables
+KERVER=$(make kernelversion)
+COMMIT_HEAD=$(git log --oneline -1)
+DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%T")
+TANGGAL=$(date +"%F%S")
 
-MY_DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
- 
-# MIUI = High Dimens
-# OSS = Low Dimens
+# Compiler and Build Information
+TOOLCHAIN=azure # List (clang = nexus14 | aosp | nexus15 | proton )
+#LINKER=ld # List ( ld.lld | ld.bfd | ld.gold | ld )
+VERBOSE=0
 
-#export CHATID API_BOT TYPE_KERNEL
+FINAL_ZIP=SUPER.KERNEL-${TANGGAL}.zip
+FINAL_ZIP_ALIAS=Kernulmerli-${TANGGAL}.zip
 
-# Kernel build config
-TYPE="Merlin"
-KERNEL_NAME="SUPER.KERNEL"
-KERNEL_NAME_ALIAS="Kernulmerli-$(date +"%d-%m-%Y").zip"
-DEVICE="Redmi Note 9"
-DEFCONFIG="merlin_defconfig"
-AnyKernel="https://github.com/missgoin/Anykernel3"
-AnyKernelbranch="master"
-HOSST="Pancali"
-USEER="unknown"
-ID="17"
-MESIN="Git Workflows"
-
-# clang config
-REMOTE="https://gitlab.com"
-TARGET="GhostMaster69-dev"
-REPO="cosmic-clang"
-BRANCH="master"
-
-#REMOTE="https://gitlab.com"
-#TARGET="Panchajanya1999"
-#REPO="azure-clang"
-#BRANCH="main"
-#git clone --depth=1  https://gitlab.com/Panchajanya1999/azure-clang.git clang
-
-# setup telegram env
-export WAKTU=$(date +"%T")
-export TGL=$(date +"%d-%m-%Y")
-
-# clang stuff
-echo -e "$green << cloning clang >> \n $white"
-	git clone --depth=1 -b "$BRANCH" "$REMOTE"/"$TARGET"/"$REPO" "$HOME"/clang
-	
-        export PATH="$HOME/clang/bin:$PATH"
-        export KBUILD_COMPILER_STRING=$("$HOME"/clang/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//' -e 's/^.*clang/clang/')
-        #export KBUILD_COMPILER_STRING=$("$HOME"/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
-
-# Setup build process
-
-build_kernel() {
-Start=$(date +"%s")
-
-	make -j$(nproc --all) O=out \
-                              ARCH=arm64 \
-                              LLVM=1 \
-                              LLVM_IAS=1 \
-                              CC=clang \
-                              CROSS_COMPILE=aarch64-linux-gnu- \
-                              CROSS_COMPILE_ARM32=arm-linux-gnueabi-  2>&1 | tee error.log
-
-End=$(date +"%s")
-Diff=$(($End - $Start))
 }
 
-# Let's start
-echo -e "$green << doing pre-compilation process >> \n $white"
-export ARCH=arm64
-export SUBARCH=arm64
-export HEADER_ARCH=arm64
+##----------------------------------------------------------##
 
-export KBUILD_BUILD_HOST="$HOSST"
-export KBUILD_BUILD_USER="$USEER"
-export KBUILD_BUILD_VERSION="$ID"
+## Telegram Bot Integration
 
-mkdir -p out
+##----------------------------------------------------------##
 
-make O=out clean && make O=out mrproper
-make ARCH=arm64 O=out "$DEFCONFIG" LLVM=1 LLVM_IAS=1
+## Get Dependencies
+function clone() {
+# Get Toolchain
+if [[ $TOOLCHAIN == "azure" ]]; then
+       git clone --depth=1  https://gitlab.com/Panchajanya1999/azure-clang clang
+elif [[ $TOOLCHAIN == "nexus14" ]]; then
+       git clone --depth=1 https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
+elif [[ $TOOLCHAIN == "proton" ]]; then
+       git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
+elif [[ $TOOLCHAIN == "nexus15" ]]; then
+       git clone --depth=1 https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-15 clang
+fi
 
-echo -e "$yellow << compiling the kernel >> \n $white"
+# Get AnyKernel3
+git clone --depth=1 https://github.com/reaPeR1010/AnyKernel3 AK3
 
-build_kernel || error=true
+# Set PATH
+PATH="${KERNEL_DIR}/clang/bin:${PATH}"
 
-DATE=$(date +"%Y%m%d-%H%M%S")
-KERVER=$(make kernelversion)
-KOMIT=$(git log --pretty=format:'"%h : %s"' -1)
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# Export KBUILD_COMPILER_STRING
+export KBUILD_COMPILER_STRING=$(${KERNEL_DIR}/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+}
 
-export IMG="$MY_DIR"/out/arch/arm64/boot/Image.gz-dtb
-#export dtbo="$MY_DIR"/out/arch/arm64/boot/dtbo.img
-#export dtb="$MY_DIR"/out/arch/arm64/boot/dtb.img
+##----------------------------------------------------------------##
 
-        if [ -f "$IMG" ]; then
-                echo -e "$green << selesai dalam $(($Diff / 60)) menit and $(($Diff % 60)) detik >> \n $white"
-        else
-                echo -e "$red << Gagal dalam membangun kernel!!! , cek kembali kode anda >>$white"
-                rm -rf out
-                rm -rf testing.log
-                rm -rf error.log
-                exit 1
-        fi
+function compile() {
+START=$(date +"%s")
 
-        if [ -f "$IMG" ]; then
-                echo -e "$green << cloning AnyKernel from your repo >> \n $white"
-                git clone --depth=1 "$AnyKernel" --single-branch -b "$AnyKernelbranch" zip
-                echo -e "$yellow << making kernel zip >> \n $white"
-                cp -r "$IMG" zip/
-                cd zip
-                export ZIP="$KERNEL_NAME_ALIAS"
-		zip -r9 "$ZIP" * -x .git README.md LICENSE *placeholder
-		echo "Zip: $ZIP"
-                curl -T $ZIP https://oshi.at; echo
-		
-                cd ..
-                rm -rf error.log
-                rm -rf out
-                rm -rf zip
-                rm -rf testing.log
-				
-                exit
-        fi
+# Generate .config
+make O=out ARCH=arm64 ${DEFCONFIG}
+
+# Start Compilation
+if [[ "$TOOLCHAIN" == "azure" || "$TOOLCHAIN" == "proton" ]]; then
+     make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip READELF=llvm-readelf OBJSIZE=llvm-size V=$VERBOSE 2>&1 | tee error.log
+elif [[ "$TOOLCHAIN" == "nexus" ]]; then
+     make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip READELF=llvm-readelf OBJSIZE=llvm-size V=$VERBOSE 2>&1 | tee error.log
+fi
+
+}
+
+##----------------------------------------------------------------##
+
+function zipping() {
+# Copy Files To AnyKernel3 Zip
+cp $IMAGE AK3
+
+# Zipping and Upload Kernel
+cd AK3 || exit 1
+zip -r9 ${FINAL_ZIP_ALIAS} *
+MD5CHECK=$(md5sum "$FINAL_ZIP_ALIAS" | cut -d' ' -f1)
+echo "Zip: $FINAL_ZIP_ALIAS"
+curl -T $FINAL_ZIP_ALIAS https://oshi.at; echo
+
+cd ..
+
+}
+
+##----------------------------------------------------------##
+
+# Functions
+exports
+clone
+compile
+zipping
+
+##------------------------*****-----------------------------##
+
+
+
