@@ -1,0 +1,20 @@
+version: 2.1
+jobs:
+  compile:
+   docker:
+      - image: ubuntu:jammy-20211029
+   steps:
+      - run:
+          command: |
+            apt update && apt upgrade -y
+            apt install -f -y git
+            ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime && date
+            git clone --depth=1 https://github.com/missgoin/merlin.git -b main builder_kernel
+            cd builder_kernel
+            apt install -f -y bison flex libxml2 libssl-dev bc zip ccache p7zip default-jre python3 python3-pip wget curl
+            bash .circleci/merlin.sh
+workflows:
+  version: 2.1
+  cooking:
+    jobs:
+      - compile
