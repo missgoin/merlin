@@ -77,7 +77,7 @@ function compile() {
 START=$(date +"%s")
 
 # Generate .config
-make O=out ARCH=arm64 ${DEFCONFIG}
+make O=out ARCH=arm64 ${DEFCONFIG} LLVM=1 LLVM_IAS=1
 
 # Start Compilation
 if [[ "$TOOLCHAIN" == "azure" || "$TOOLCHAIN" == "proton" ]]; then
