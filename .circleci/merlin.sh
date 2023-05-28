@@ -25,8 +25,8 @@ function exports() {
   export KBUILD_BUILD_USER="unknown"
   export PROCS=$(nproc --all)
   export DISTRO=$(source /etc/os-release && echo "${NAME}")
-  export LC_ALL=C && export USE_CCACHE=1
-  ccache -M 100G
+  #export LC_ALL=C && export USE_CCACHE=1
+  #ccache -M 100G
 
 # Variables
 KERVER=$(make kernelversion)
@@ -35,7 +35,7 @@ DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%T")
 TANGGAL=$(date +"%F%S")
 
 # Compiler and Build Information
-TOOLCHAIN=neutron # List (clang = nexus14 | aosp | nexus15 | proton )
+TOOLCHAIN=proton # List (clang = nexus14 | aosp | nexus15 | proton )
 #LINKER=ld # List ( ld.lld | ld.bfd | ld.gold | ld )
 VERBOSE=0
 
