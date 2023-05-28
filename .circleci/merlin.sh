@@ -63,7 +63,7 @@ elif [[ $TOOLCHAIN == "nexus15" ]]; then
        git clone --depth=1 https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-15 clang
 elif [[ $TOOLCHAIN == "neutron" ]]; then
 bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) -S=latest
-apt install libelf-dev libarchive-tools
+sudo apt install libelf-dev libarchive-tools
 bash -c "$(wget -O - https://gist.githubusercontent.com/dakkshesh07/240736992abf0ea6f0ee1d8acb57a400/raw/e97b505653b123b586fc09fda90c4076c8030732/patch-for-old-glibc.sh)"
 
 fi
@@ -93,11 +93,11 @@ elif [[ "$TOOLCHAIN" == "nexus" ]]; then
      make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 V=$VERBOSE 2>&1 | tee error.log
 elif [[ "$TOOLCHAIN" == "neutron" ]]; then
 make -j$(nproc --all) O=out \
-   ARCH=$ARCH \
+                        ARCH=$ARCH \
 			CC="clang" \
 			CROSS_COMPILE=aarch64-linux-gnu- \
 			CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-   LLVM=1 \
+                        LLVM=1 \
 			LD=ld.lld \
 			AR=llvm-ar \
 			NM=llvm-nm \
