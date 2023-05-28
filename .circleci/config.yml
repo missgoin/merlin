@@ -2,7 +2,7 @@
 jobs:
   build:
     docker:
-      - image: ubuntu:latest
+      - image: 31482281/ubuntu:latest
     steps:
       - checkout
       - run:
