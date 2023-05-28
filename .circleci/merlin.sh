@@ -10,7 +10,7 @@ set -e
 KERNEL_DIR="$(pwd)"
 VERSION=01
 MODEL=Xiaomi
-DEVICE=merlin
+DEVICE=lancelot
 DEFCONFIG=${DEVICE}_defconfig
 IMAGE=$(pwd)/out/arch/arm64/boot/Image.gz-dtb
 #C_BRANCH=$(git branch --show-current)
@@ -40,7 +40,7 @@ TOOLCHAIN=proton # List (clang = nexus14 | aosp | nexus15 | proton )
 VERBOSE=0
 
 FINAL_ZIP=SUPER.KERNEL-${TANGGAL}.zip
-FINAL_ZIP_ALIAS=Kernulmerli-${TANGGAL}.zip
+FINAL_ZIP_ALIAS=Kernullance-${TANGGAL}.zip
 
 }
 
